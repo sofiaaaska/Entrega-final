@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Proyectos de Título</title>
+        <link href="css/style.css" rel="stylesheet" />
+    </head>
+    <body>
+        <nav>
+            <a href="index.html">Resumen <span>de Proyectos de Título</span></a>
+            <a href="profes.html"><span>Proyectos por </span>Profesor(a) Guía</a>
+            <a href="titulos.html"><span>Proyectos por </span>Título Profesional</a>
+            <a href="semestres.html" class="active"><span>Proyectos por </span>Semestre</a>
+        </nav>        
+        <header>
+            <h1>Proyectos por Semestre</h1>
+            <select>
+                <option value="2024-2">Segundo semestre del 2024</option>
+                <option value="2024-1">Primer semestre del 2024</option>
+                <option value="2023-2">Segundo semestre del 2023</option>
+                <option value="2023-1">Primer semestre del 2023</option>
+                <option value="2022-2">Segundo semestre del 2022</option>
+                <option value="2022-1">Primer semestre del 2022</option>
+                <option value="2021-2">Segundo semestre del 2021</option>
+            </select>
+        </header>
+        <main>
+            <h2></h2>
+            <table>
+                <thead>
+                    <th>Egresado/a</th>
+                    <th>Prof. Guía</th>
+                    <th>Título</th>
+                    <th>Proyecto</th>
+                    <th>Nota</th>
+                </thead>
+                <tbody id="mencion"></tbody>
+            </table>
+
+            <div id="palabreo"></div>
+
+        </main>
+        <footer>
+            <p>
+                <small>
+                    <a href="https://github.com/profesorfaco/troncal" target="_blank">Diseño y visualización de información</a> | Este ejercicio, preparado por
+                    <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://github.com/profesorfaco">profesorfaco</a>, es publicado bajo licencia
+                    <a href="https://creativecommons.org/licenses/by-nc/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer">CC BY-NC 4.0</a>
+                </small>
+            </p>
+        </footer>
+        <script src="js/semestres.js"></script>
+    </body>
+</html>
