@@ -45,7 +45,7 @@ async function datos(criterio) {
     console.log("Lo que sigue son todos los datos:");
     console.log(data);
 
-    data.data.forEach((d) => {
+    data.data.titulos.forEach((d) => {
         if (d.semestre_examen == criterio) {
             seleccion.push(d);
         }
