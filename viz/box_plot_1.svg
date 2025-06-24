@@ -16,7 +16,7 @@
         }
         .s2 {
             fill: #000000;
-            stroke: #00c3ff;
+            stroke: #b571c8;
             stroke-dasharray: 4;
         }
         .s3 {
@@ -32,23 +32,23 @@
         }
         .s6 {
             fill: #000000;
-            stroke: #189af6;
+            stroke: #8db7e8;
             stroke-dasharray: 4;
         }
         .s7 {
             fill: #000000;
-            stroke: #189af6;
+            stroke: #8db7e8;
         }
         .s8 {
-            fill: #189af6;
+            fill: #8db7e8;
         }
         .s9 {
             fill: #ffffff;
-            stroke: #189af6;
+            stroke: #8db7e8;
         }
         .s10 {
             fill: #000000;
-            stroke: #125389;
+            stroke: #e88d93;
             stroke-dasharray: 4;
         }
         .s11 {
@@ -56,7 +56,7 @@
             stroke: #585a5c;
         }
         .s12 {
-            fill: #125389;
+            fill: #e88d93;
         }
         .s13 {
             fill: #ffffff;
