@@ -13,7 +13,7 @@ async function datos(criterio) {
     var profeOtres = [];
     var notas = [];
     var notasPrevias = [];
-    const consulta = await fetch("https://api.myjson.online/v1/records/6a17f890-1a65-45e6-8c26-10ce18c28ca5");
+    const consulta = await fetch("https://raw.githubusercontent.com/sofiaaaska/trabajo_final/refs/heads/main/data.json");
     const data = await consulta.json();
 
     console.log(data);
