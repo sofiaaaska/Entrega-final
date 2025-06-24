@@ -1,9 +1,225 @@
-const resumen = document.querySelector("h2");
-const tabla = document.querySelector("#mencion");
-const palabreo = document.querySelector("#palabreo");
-const dona = document.querySelector("#donnut");
-const profeNotas = document.querySelector("#slope");
-const profeGuia = document.querySelector("#profe");
+const identidadAqui = document.querySelector("#identidad");
+const asignaturasAqui = document.querySelector("#asignaturas");
+const dialogoAqui = document.querySelector("#dialogo");
+const detallesAqui = document.querySelector("#detalles");
+const resultadosAqui = document.querySelector("#resultados");
+const afinesAqui = document.querySelector("#afines");
+
+var dataProfes, dataTitulos;
+
+async function datos(criterio) {
+    var seleccion = [];
+    var profeSeleccion = [];
+    var profeOtres = [];
+    var notas = [];
+    var notasPrevias = [];
+    const consulta = await fetch("https://api.myjson.online/v1/records/6a17f890-1a65-45e6-8c26-10ce18c28ca5");
+    const data = await consulta.json();
+
+    console.log(data);
+
+    dataProfes = data.data.profes;
+    dataTitulos = data.data.titulos;
+
+    console.log(dataProfes);
+
+    console.log(dataTitulos);
+
+    //Creo una selección, basándome en el selector
+    dataTitulos.forEach((d) => {
+        if (d.profe_guia == criterio) {
+            seleccion.push(d);
+        }
+    });
+
+    //Creo una selección, basándome en el selector
+    dataProfes.forEach((d) => {
+        if (d.name == criterio) {
+            profeSeleccion = d;
+        }
+    });
+
+    console.log(profeSeleccion);
+
+    dataProfes.forEach((d) => {
+        if (d.grupo == profeSeleccion.grupo) {
+            if (d.name !== profeSeleccion.name) {
+                profeOtres.push(d);
+            }
+        }
+    });
+
+    console.log(profeOtres);
+
+    identidadAqui.innerHTML = `
+    <div class="row align-items-end">
+        <div class="col-md-5">
+            <img src="${profeSeleccion.foto}" class="w-100 rounded">
+        </div>
+        <div class="col-md-7">
+            <h1 class="fs-3 pt-2">${profeSeleccion.nombre}</h1>
+            <h2 class="fs-4">${profeSeleccion.nivel}</h2>
+            <h2 class="fs-5">${profeSeleccion.adscripcion}</h2>
+            <h4 class="fs-5 text-body-tertiary">Estudios de postgrado y título profesional:</h4>
+            ${grados(profeSeleccion.grados)}
+        </div>
+    </div>
+    <div class="row align-items-top pt-4 mt-4 border-top">
+        <div class="col-md-5">
+            <p class="fw-bold mb-1">Palabras clave</p>
+            <p>${keywords(profeSeleccion.keywords)}</p>
+        </div>
+        <div class="col-md-7">
+            <p class="fw-bold mb-1">Enfoque de guiatura</p>
+            <p>${profeSeleccion.descriptor}</p>
+        </div>        
+        <div class="col-md-12">
+            <p class="fw-bold mb-1">Más información</p>
+            <p class="small">${more(profeSeleccion.info)}</p>
+        </div>
+    </div>
+    `;
+
+    asignaturasAqui.innerHTML = `<h2 class="fs-4">Asignaturas impartidas por ${profeSeleccion.nombre}</h2><object data="${profeSeleccion.asignaturas}" type="image/svg+xml" class="w-100 mt-4">
+            </object>`;
+
+    if(profeSeleccion.dialogo){
+        dialogoAqui.innerHTML = `<h2 class="fs-4 my-3 border-top pt-3">Conversando sobre nuestro sello universitario, perfil de egreso y la gestión de su docencia con ${profeSeleccion.nombre}</h2>${dialogante(profeSeleccion.dialogo)}`;
+    }
+
+    detallesAqui.innerHTML = `<div class="col"><dl><dt class="mb-2">Énfasis</dt>${enfasis(profeSeleccion.enfasis.toString())}</dl></div><div class="col"><dl><dt class="mb-2">Líneas DdD</dt>${lineas(
+        profeSeleccion.lineas.toString()
+    )}</dl></div><div class="col-md-7"><dl class="mb-2"><dt class="mb-2">Áreas de investigación/creación FAU</dt>${areas(profeSeleccion.areas.toString())}</dl></div>`;
+
+    profeOtres.forEach((a) => {
+        afinesAqui.innerHTML += `<div class="col-4"><a href="profes.html?data=${a.name}"><img src="${a.foto}" class="w-100 rounded"> <p>${a.nombre}</p></a></div>`;
+    });
+
+    if (profeSeleccion.titulades !== 0) {
+        //Ordeno la selección por nombre de tituladas/os
+        seleccion.sort(function (a, b) {
+            if (a.nota_proyecto < b.nota_proyecto) {
+                return 1;
+            }
+            if (a.nota_proyecto > b.nota_proyecto) {
+                return -1;
+            }
+            return 0;
+        });
+
+        var graficoFinal = "";
+
+        if (new URLSearchParams(window.location.search).get("clave")) {
+            var clave = new URLSearchParams(window.location.search).get("clave");
+            if ((clave = "admin")) {
+                graficoFinal = `<div class="row py-5">
+                            <div class="col-sm-6">
+                                <p>¿Cómo se relaciona su nota aprobatoria previa, de Proyecto de Título I, con la nota definida por la comisión examinadora de Proyecto de Título II?</p>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 65" id="slope"></svg>
+                            </div>
+                            <div class="col-sm-6">
+                                <p>¿Qué parte de las inscripciones en la asignatura de Proyecto de Título II con <span id="profe"></span> se han convertido en Exámenes de Título aprobados?</p>
+                                <div id="donnut"></div>
+                            </div>    
+                        </div>`;
+            }
+        }
+
+        resultadosAqui.innerHTML = `<h2 class="fs-4 mt-4 border-top pt-3">Resultados en Examen de Título<sup>*</sup></h2>
+                <p class="lead" id="resumen"></p>
+                <div class="table-responsive">
+                    <table class="table small border-top border-2">
+                        <thead>
+                            <th>Egresado/a</th>
+                            <th>Título</th>
+                            <th class="text-center d-none d-md-table-cell">Semestre</th>
+                            <th>Proyecto</th>
+                            <th class="text-center">Nota</th>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                 ${graficoFinal}
+            <p class="small">*Resultados en Examen de Título sólo consideran al <a href="https://fau.uchile.cl/admision/por-que-estudiar-en-la-fau/diseno" target="_blank">actual programa de estudios</a>. Para información de otras memorias y tesis, por favor visite su <a href="${profeSeleccion.perfil}" target="_blank">Portafolio Académico de la Universidad de Chile</a>.</p>
+    `;
+
+        //Genero una tabla que muestre la selección ya ordenada
+        seleccion.forEach((s, i) => {
+            if (s.repositorio_academico) {
+                document.querySelector("tbody").innerHTML += `
+                    <tr><td>${s.nombre}</td><td>${s.titulo_profesional}</td><td class="text-center d-none d-md-table-cell">${s.semestre_examen}</td><td><a href="${s.repositorio_academico}" target="_blank">${
+                    s.proyecto
+                }</a></td><td class="text-center">${s.nota_proyecto.toFixed(1).replace(".",",")}</td></tr>`;
+            } else {
+                document.querySelector("tbody").innerHTML += `<tr><td>${s.nombre}</td><td>${s.titulo_profesional}</td><td class="text-center">${s.semestre_examen}</td><td>${s.proyecto}</td><td class="text-center">${s.nota_proyecto.toFixed(
+                    1
+                ).replace(".",",")}</td></tr>`;
+            }
+            notas.push(s.nota_proyecto);
+            notasPrevias.push(s.nota_anteproyecto);
+        });
+
+        //Saco un promedio de las notas en la tabla
+        var i = 0;
+        var total = 0;
+        notas.forEach((n) => {
+            total += n;
+            i++;
+        });
+        var promedio = (total / i).toFixed(1);
+
+        if (notas.length == 1) {
+            document.querySelector("#resumen").innerHTML = `<em>${promedio.replace(".",",")}</em> es la nota del proyecto guiado por ${profeSeleccion.nombre} hasta un Examen de Título aprobado`;
+        } else {
+            document.querySelector("#resumen").innerHTML = `Son <em>${notas.length}</em> los proyectos guiados por ${
+                profeSeleccion.nombre
+            } hasta un Examen de Título aprobado. El promedio de su nota de aprobación es de <em>${promedio.replace(".",",")}</em>. La mediana es de <em>${mediana(notas).toFixed(1).replace(".",",")}</em>.</em>`;
+        }
+
+        document.querySelector("#donnut").innerHTML = `<svg width="100%" height="100%" viewBox="0 0 42 42"><circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="var(--acentoAlto)" stroke-width="2"></circle><circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="var(--acento)" stroke-width="2" stroke-dasharray="${
+            profeSeleccion.porcentajes
+        } ${100 - profeSeleccion.porcentajes}" stroke-dashoffset="25"></circle><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="7" ${profeSeleccion.porcentajes}>${
+            profeSeleccion.porcentajes
+        }%</text><text x="50%" y="65%" dominant-baseline="middle" text-anchor="middle" font-size="2" ${profeSeleccion.porcentajes}>${profeSeleccion.titulades} de ${profeSeleccion.guiades}</text></svg>`;
+        document.querySelector("#profe").innerHTML = profeSeleccion.profe;
+        document.querySelector("#slope").innerHTML = `
+    <circle cx="5" cy="2.5" r=".5" fill="silver"/>
+    <line x1="5" y1="2.5" x2="5" y2="62" stroke="silver" stroke-width=".3" />
+    <circle cx="5" cy="62" r=".5" fill="silver"/>
+    <circle cx="60" cy="2.5" r=".5" fill="silver"/>
+    <line x1="60" y1="2.5" x2="60" y2="62.5" stroke="silver" stroke-width=".3" />
+    <circle cx="60" cy="62.5" r=".5" fill="silver"/>
+    `;
+        for (var i = 0; i < notas.length; i++) {
+            document.querySelector("#slope").innerHTML += `<g><text x="0.5" y="${140 - notasPrevias[i] * 20 + 2.5}" font-size="2.3" dominant-baseline="middle">${notasPrevias[i].toFixed(1)}</text><circle cx="5" cy="${140 - notasPrevias[i] * 20 + 2.5}" r=".5" fill="var(--acento)"/><line x1="5" y1="${140 - notasPrevias[i] * 20 + 2.5}" x2="60" y2="${140 - notas[i] * 20 + 2.5}" stroke="var(--acento)" stroke-width=".3"/><circle cx="60" cy="${140 - notas[i] * 20 + 2.5}" r=".5" fill="var(--acento)"/><text x="61.25" y="${140 - notas[i] * 20 + 2.5}" font-size="2.3" dominant-baseline="middle">${notas[i].toFixed(1)}</text></g>`;
+        }
+    }
+}
+
+if (new URLSearchParams(window.location.search).get("data")) {
+    var seleccion = new URLSearchParams(window.location.search).get("data");
+    datos(seleccion).catch((error) => console.error(error));
+    console.log(seleccion);
+    document.querySelector('select [value="' + seleccion + '"]').selected = true;
+} else {
+    datos("Abud Carrillo, Jenny").catch((error) => console.error(error));
+}
+
+document.querySelectorAll("select")[0].addEventListener("change", (event) => {
+    identidadAqui.innerHTML = " ";
+    asignaturasAqui.innerHTML = " ";
+    dialogoAqui.innerHTML = "";
+    detallesAqui.innerHTML = "";
+    resultadosAqui.innerHTML = "";
+    afinesAqui.innerHTML = "";
+    console.clear();
+    var seleccion = [];
+    var profeSeleccion = [];
+    var profeOtres = [];
+    var notas = [];
+    var notasPrevias = [];
+    datos(event.target.value).catch((error) => console.error(error));
+});
 
 function eficiencia(profe) {
     var esto;
@@ -30,488 +246,110 @@ function mediana(numbers) {
     if (sorted.length % 2 === 0) {
         return (sorted[middle - 1] + sorted[middle]) / 2;
     }
-
     return sorted[middle];
 }
 
-const profes = [
-    {
-        profe: "Jenny Abud Carrillo",
-        alfabetico: "Abud Carrillo, Jenny",
-        guiades: 12,
-        titulades: 10,
-        porcentajes: 83,
-    },
-    {
-        profe: "Paola Benavides Bermúdez",
-        alfabetico: "Benavides Bermúdez, Paola",
-        guiades: 5,
-        titulades: 2,
-        porcentajes: 40,
-    },
-    {
-        profe: "Eduardo Castillo Espinoza",
-        alfabetico: "Castillo Espinoza, Eduardo",
-        guiades: 21,
-        titulades: 9,
-        porcentajes: 43,
-    },
-    {
-        profe: "Felipe Cortez Orellana",
-        alfabetico: "Cortez Orellana, Felipe",
-        guiades: 17,
-        titulades: 9,
-        porcentajes: 53,
-    },
-    {
-        profe: "Paola De la Sotta Lazzerini",
-        alfabetico: "De la Sotta Lazzerini, Paola",
-        guiades: 19,
-        titulades: 7,
-        porcentajes: 37,
-    },
-    {
-        profe: "Pablo Domínguez González",
-        alfabetico: "Domínguez González, Pablo",
-        guiades: 53,
-        titulades: 25,
-        porcentajes: 47,
-    },
-    {
-        profe: "Sergio Donoso Cisternas",
-        alfabetico: "Donoso Cisternas, Sergio",
-        guiades: 16,
-        titulades: 7,
-        porcentajes: 44,
-    },
-    {
-        profe: "Rodrigo Dueñas Santander",
-        alfabetico: "Dueñas Santander, Rodrigo",
-        guiades: 24,
-        titulades: 12,
-        porcentajes: 50,
-    },
-    {
-        profe: "Pamela Gatica Ramírez",
-        alfabetico: "Gatica Ramírez, Pamela",
-        guiades: 12,
-        titulades: 6,
-        porcentajes: 50,
-    },
-    {
-        profe: "Cristián Gómez Moya",
-        alfabetico: "Gómez Moya, Cristián",
-        guiades: 8,
-        titulades: 3,
-        porcentajes: 38,
-    },
-    {
-        profe: "Rubén Jacob Dazarola",
-        alfabetico: "Jacob Dazarola, Rubén",
-        guiades: 40,
-        titulades: 13,
-        porcentajes: 33,
-    },
-    {
-        profe: "Trinidad Jove Avilés",
-        alfabetico: "Jove Avilés, Trinidad",
-        guiades: 3,
-        titulades: 2,
-        porcentajes: 67,
-    },
-    {
-        profe: "Lorna Lares López",
-        alfabetico: "Lares López, Lorna",
-        guiades: 14,
-        titulades: 4,
-        porcentajes: 29,
-    },
-    {
-        profe: "Juan Carlos Lepe Muñoz",
-        alfabetico: "Lepe Muñoz, Juan Carlos",
-        guiades: 3,
-        titulades: 2,
-        porcentajes: 67,
-    },
-    {
-        profe: "Félix Maldonado de la Fuente",
-        alfabetico: "Maldonado de la Fuente, Felix",
-        guiades: 9,
-        titulades: 3,
-        porcentajes: 33,
-    },
-    {
-        profe: "Antonio Marín Pacheco",
-        alfabetico: "Marín Pacheco, Antonio",
-        guiades: 6,
-        titulades: 4,
-        porcentajes: 67,
-    },
-    {
-        profe: "Raúl Molina Oyarzún",
-        alfabetico: "Molina Oyarzún, Raúl",
-        guiades: 2,
-        titulades: 1,
-        porcentajes: 50,
-    },
-    {
-        profe: "Alfredo Mora Briones",
-        alfabetico: "Mora Briones, Alfredo",
-        guiades: 2,
-        titulades: 1,
-        porcentajes: 50,
-    },
-    {
-        profe: "María Paz Morales Mujica",
-        alfabetico: "Morales Mujica, María Paz",
-        guiades: 9,
-        titulades: 6,
-        porcentajes: 67,
-    },
-    {
-        profe: "Iván Méndez Olivares",
-        alfabetico: "Méndez Olivares, Iván",
-        guiades: 6,
-        titulades: 2,
-        porcentajes: 33,
-    },
-    {
-        profe: "Pablo Nuñez Gutiérrez",
-        alfabetico: "Nuñez Gutiérrez, Pablo",
-        guiades: 6,
-        titulades: 4,
-        porcentajes: 67,
-    },
-    {
-        profe: "Verónica Ode Saleh",
-        alfabetico: "Ode Saleh, Verónica",
-        guiades: 27,
-        titulades: 15,
-        porcentajes: 56,
-    },
-    {
-        profe: "Roberto Osses Flores",
-        alfabetico: "Osses Flores, Roberto",
-        guiades: 19,
-        titulades: 7,
-        porcentajes: 37,
-    },
-    {
-        profe: "Sebastián Pagueguy Fenner",
-        alfabetico: "Pagueguy Fenner, Sebastián",
-        guiades: 14,
-        titulades: 5,
-        porcentajes: 36,
-    },
-    {
-        profe: "René Perea Morales",
-        alfabetico: "Perea Morales, René",
-        guiades: 7,
-        titulades: 3,
-        porcentajes: 43,
-    },
-    {
-        profe: "Bruno Perelli Soto",
-        alfabetico: "Perelli Soto, Bruno",
-        guiades: 7,
-        titulades: 2,
-        porcentajes: 29,
-    },
-    {
-        profe: "Gabriela Pradenas Guentherodt",
-        alfabetico: "Pradenas Guentherodt, Gabriela",
-        guiades: 4,
-        titulades: 3,
-        porcentajes: 75,
-    },
-    {
-        profe: "Daniel Reyes León",
-        alfabetico: "Reyes León, Daniel",
-        guiades: 5,
-        titulades: 4,
-        porcentajes: 80,
-    },
-    {
-        profe: "Macarena Ruiz Balart",
-        alfabetico: "Ruiz Balart, Macarena",
-        guiades: 2,
-        titulades: 1,
-        porcentajes: 50,
-    },
-    {
-        profe: "Mónica Santibañez Boric",
-        alfabetico: "Santibañez Boric, Mónica",
-        guiades: 2,
-        titulades: 1,
-        porcentajes: 50,
-    },
-    {
-        profe: "Rebeca Silva Roquefort",
-        alfabetico: "Silva Roquefort, Rebeca",
-        guiades: 1,
-        titulades: 1,
-        porcentajes: 100,
-    },
-    {
-        profe: "Leonardo Soto Calquín",
-        alfabetico: "Soto Calquín, Leonardo",
-        guiades: 21,
-        titulades: 8,
-        porcentajes: 38,
-    },
-    {
-        profe: "Hans Stange Marcus",
-        alfabetico: "Stange Marcus, Hans",
-        guiades: 3,
-        titulades: 1,
-        porcentajes: 33,
-    },
-    {
-        profe: "Mauricio Tapia Reyes",
-        alfabetico: "Tapia Reyes, Mauricio",
-        guiades: 5,
-        titulades: 4,
-        porcentajes: 80,
-    },
-    {
-        profe: "Mauricio Vico Sánchez",
-        alfabetico: "Vico Sánchez, Mauricio",
-        guiades: 4,
-        titulades: 2,
-        porcentajes: 50,
-    },
-    {
-        profe: "Andrea Wechsler Pizarro",
-        alfabetico: "Wechsler Pizarro, Andrea",
-        guiades: 38,
-        titulades: 11,
-        porcentajes: 29,
-    },
-    {
-        profe: "Mariana Young Araya",
-        alfabetico: "Young Araya, Mariana",
-        guiades: 12,
-        titulades: 6,
-        porcentajes: 50,
-    },
-    {
-        profe: "Osvaldo Zorzano Betancourt",
-        alfabetico: "Zorzano Betancourt, Osvaldo",
-        guiades: 11,
-        titulades: 3,
-        porcentajes: 27,
-    },
-];
-
-async function datos(criterio) {
-    var seleccion = [];
-    var profeSeleccion = [];
-    var notas = [];
-    var notasPrevias = [];
-    const consulta = await fetch("https://raw.githubusercontent.com/profesorfaco/troncal/refs/heads/main/clase-09/titulades.json");
-    const data = await consulta.json();
-    console.log("Lo que sigue son todos los datos:");
-    console.log(data);
-
-    //Creo una selección, basándome en el selector
-    data.forEach((d) => {
-        if (d.profe_guia == criterio) {
-            seleccion.push(d);
-        }
-    });
-
-    //Creo una selección, basándome en el selector
-    profes.forEach((d) => {
-        if (d.alfabetico == criterio) {
-            profeSeleccion = d;
-        }
-    });
-
-    console.log(profeSeleccion);
-
-    //Ordeno la selección por nombre de tituladas/os
-    seleccion.sort(function (a, b) {
-        if (a.nota_proyecto < b.nota_proyecto) {
-            return 1;
-        }
-        if (a.nota_proyecto > b.nota_proyecto) {
-            return -1;
-        }
-        return 0;
-    });
-
-    //Genero una tabla que muestre la selección ya ordenada
-    seleccion.forEach((s, i) => {
-        if (s.repositorio_academico) {
-            tabla.innerHTML += `
-                    <tr><td>${s.nombre}</td><td>${s.titulo_profesional}</td><td>${s.semestre_examen}</td><td><a href="${s.repositorio_academico}" target="_blank">${s.proyecto}</a></td><td class="text-center">${s.nota_proyecto.toFixed(
-                1
-            )}</td></tr>`;
+function dialogante(array) {
+    const n = array.length;
+    var coso = "";
+    for (var x = 0; x < n; x++) {
+        if (x % 2 !== 0) {
+            coso += `<div class="profesor"><div class="burbuja">${array[x]}</div></div>`;
         } else {
-            tabla.innerHTML += `<tr><td>${s.nombre}</td><td>${s.titulo_profesional}</td><td>${s.semestre_examen}</td><td>${s.proyecto}</td><td class="text-center">${s.nota_proyecto.toFixed(1)}</td></tr>`;
+            coso += `<div class="estudiante"><div class="burbuja">${array[x]}</div></div>`;
         }
-        notas.push(s.nota_proyecto);
-        notasPrevias.push(s.nota_anteproyecto);
-    });
-
-    //Saco un promedio de las notas en la tabla
-    var i = 0;
-    var total = 0;
-    notas.forEach((n) => {
-        total += n;
-        i++;
-    });
-    var promedio = (total / i).toFixed(1);
-
-    if (notas.length == 1) {
-        resumen.innerHTML = `<em>${promedio}</em> es la nota del proyecto guiado por ${profeSeleccion.profe} hasta un Examen de Título aprobado`;
-    } else {
-        resumen.innerHTML = `<em>${promedio}</em> es la nota promedio de los <em>${notas.length}</em> proyectos guiados por ${profeSeleccion.profe} hasta un Examen de Título aprobado; la mediana es de <em>${mediana(notas).toFixed(
-            1
-        )}</em>, y la desviación estándar es de <em>${desviacionEstandar(notas).toFixed(2)}</em>`;
     }
-
-    //Buscando las palabras frecuentes del "para qué" en su selección
-    var words = "";
-    seleccion.forEach((s) => {
-        s.proyecto = s.proyecto.replace(".", "");
-        s.proyecto = s.proyecto.toLowerCase();
-        words = words + " " + s.proyecto;
-    });
-    var palabras = words.split(" ");
-    palabras = palabras.sort();
-    const nopalabras = [
-        "",
-        ":",
-        "a",
-        "al",
-        "así",
-        "como",
-        "con",
-        "de",
-        "De",
-        "del",
-        "dentro",
-        "desde",
-        "e",
-        "el",
-        "El",
-        "en",
-        "entre",
-        "esta",
-        "este",
-        "esto",
-        "estos",
-        "fin",
-        "hacia",
-        "la",
-        "las",
-        "le",
-        "les",
-        "lo",
-        "los",
-        "más",
-        "mediante",
-        "no",
-        "o",
-        "para",
-        "por",
-        "que",
-        "qué",
-        "se",
-        "sin",
-        "sobre",
-        "son",
-        "su",
-        "sus",
-        "tanto",
-        "través",
-        "un",
-        "una",
-        "unas",
-        "unos",
-        "vez",
-        "y",
-        "Una",
-        "bajo",
-    ];
-    const sacaPalabras = (arreglo, sacar) => {
-        return arreglo.filter((palabra) => {
-            return !sacar.includes(palabra);
-        });
-    };
-    var palabrasAcotadas = sacaPalabras(palabras, nopalabras);
-    const cuentaRepeticiones = (arreglo = []) => {
-        const resultado = [];
-        arreglo.forEach((el) => {
-            const index = resultado.findIndex((obj) => {
-                return obj["name"] === el;
-            });
-            if (index === -1) {
-                resultado.push({
-                    name: el,
-                    count: 1,
-                });
-            } else {
-                resultado[index]["count"]++;
-            }
-        });
-        return resultado;
-    };
-    var total = cuentaRepeticiones(palabrasAcotadas);
-    var texto = "";
-    total.forEach((x) => {
-        if (x.count > 1) {
-            texto = texto + `<span><em>${x.name}</em> (${x.count} veces)</span> `;
-        }
-    });
-    if (texto) {
-        palabreo.innerHTML = `<p>Se revisan los nombres de los proyectos en el grupo buscando palabras repetidas (omitiendo artículos, adverbios, preposiciones y conjunciones). El resultado:</p>
-                        <p>${texto}</p>`;
-    } else {
-        palabreo.innerHTML = `<p>Se revisan los nombres de los proyectos en el grupo, pero <em>no</em> se encuentran palabras repetidas.</p>`;
-    }
-
-    dona.innerHTML = `<svg width="100%" height="100%" viewBox="0 0 42 42"><circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="var(--acentoAlto)" stroke-width="2"></circle><circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="var(--acento)" stroke-width="2" stroke-dasharray="${
-        profeSeleccion.porcentajes
-    } ${100 - profeSeleccion.porcentajes}" stroke-dashoffset="25"></circle><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="7" ${profeSeleccion.porcentajes}>${
-        profeSeleccion.porcentajes
-    }%</text><text x="50%" y="65%" dominant-baseline="middle" text-anchor="middle" font-size="2" ${profeSeleccion.porcentajes}>${profeSeleccion.titulades} de ${profeSeleccion.guiades}</text></svg>`;
-    profeGuia.innerHTML = profeSeleccion.profe;
-    profeNotas.innerHTML = `
-    <circle cx="5" cy="2.5" r=".5" fill="silver"/>
-    <line x1="5" y1="2.5" x2="5" y2="62" stroke="silver" stroke-width=".3" />
-    <circle cx="5" cy="62" r=".5" fill="silver"/>
-    <circle cx="60" cy="2.5" r=".5" fill="silver"/>
-    <line x1="60" y1="2.5" x2="60" y2="62.5" stroke="silver" stroke-width=".3" />
-    <circle cx="60" cy="62.5" r=".5" fill="silver"/>
-    `;
-    for (var i = 0; i < notas.length; i++) {
-        profeNotas.innerHTML += `<g>    
-<text x="0.5" y="${140 - notasPrevias[i] * 20 + 2.5}" font-size="2.3" dominant-baseline="middle">${notasPrevias[i].toFixed(1)}</text>
-<circle cx="5" cy="${140 - notasPrevias[i] * 20 + 2.5}" r=".5" fill="var(--acento)"/>
-<line x1="5" y1="${140 - notasPrevias[i] * 20 + 2.5}" x2="60" y2="${140 - notas[i] * 20 + 2.5}" stroke="var(--acento)" stroke-width=".3"/>
-<circle cx="60" cy="${140 - notas[i] * 20 + 2.5}" r=".5" fill="var(--acento)"/>
-<text x="61.25" y="${140 - notas[i] * 20 + 2.5}" font-size="2.3" dominant-baseline="middle">${notas[i].toFixed(1)}</text>
-</g>`;
-    }
+    return coso;
 }
 
-datos("Gatica Ramírez, Pamela").catch((error) => console.error(error));
+function areas(data) {
+    var susAreas = "";
+    if (data.includes("1")) {
+        susAreas += `<dd class="small">A1. SISTEMAS FÍSICOS, NATURALES Y CAMBIOS AMBIENTALES</dd>`;
+    }
+    if (data.includes("2")) {
+        susAreas += `<dd class="small">A2. DIMENSIONES SOCIOECOLÓGICAS EN EL TERRITORIO</dd>`;
+    }
+    if (data.includes("3")) {
+        susAreas += `<dd class="small">A3. ASENTAMIENTOS, MOVILIDADES Y ORGÁNICAS COMUNITARIAS</dd>`;
+    }
+    if (data.includes("4")) {
+        susAreas += `<dd class="small">A4. DINÁMICAS Y TRANSFORMACIONES MORFOLÓGICAS, URBANAS Y RURALES</dd>`;
+    }
+    if (data.includes("5")) {
+        susAreas += `<dd class="small">A5. CREACIÓN, INNOVACIÓN PROYECTUAL Y DESARROLLOS TECNOLÓGICOS</dd>`;
+    }
+    if (data.includes("6")) {
+        susAreas += `<dd class="small">A6. CONSERVACIÓN E INTERVENCIÓN DE OBRAS, ENTORNOS Y CIUDADES PATRIMONIALES</dd>`;
+    }
+    if (data.includes("7")) {
+        susAreas += `<dd class="small">A7. CULTURAS VISUALES, MATERIALES-INMATERIALES Y MEDIALES</dd>`;
+    }
+    if (data.includes("8")) {
+        susAreas += `<dd class="small">A8. FENÓMENOS SENSIBLES, PERCEPTUALES Y CORPORALES EN EL ENTORNO</dd>`;
+    }
+    return susAreas;
+}
 
-document.querySelectorAll("select")[0].addEventListener("change", (event) => {
-    tabla.innerHTML = " ";
-    palabreo.innerHTML = " ";
-    profeNotas.innerHTML = "";
-    console.clear();
-    var seleccion = [];
-    var notas = [];
-    var notasPrevias = [];
-    datos(event.target.value).catch((error) => console.error(error));
-    if(event.target.value == "Becas Villegas, Macarena"){
-        document.querySelector("#primera").classList.add("esconde");
-        document.querySelector("#segunda").classList.remove("esconde")
-    } else {
-        document.querySelector("#primera").classList.remove("esconde");
-        document.querySelector("#segunda").classList.add("esconde")    }
-});
+function lineas(data) {
+    var susLineas = "";
+    if (data.includes("1")) {
+        susLineas += `<dd class="small">L1. Diseño centrado en la persona</dd>`;
+    }
+    if (data.includes("2")) {
+        susLineas += `<dd class="small">L2. Materiales, Tecnologías y Procesos</dd>`;
+    }
+    if (data.includes("3")) {
+        susLineas += `<dd class="small">L3. Morfología, Percepción y Color</dd>`;
+    }
+    if (data.includes("4")) {
+        susLineas += `<dd class="small">L4. Identidad y Patrimonio</dd>`;
+    }
+    if (data.includes("5")) {
+        susLineas += `<dd class="small">L5. Estudios Visuales y Mediales</dd>`;
+    }
+    if (data.includes("6")) {
+        susLineas += `<dd class="small">L6. Diseño Editorial y Tipografía</dd>`;
+    }
+    return susLineas;
+}
+
+function enfasis(data) {
+    var susEnfasis = "";
+    if (data.includes("1")) {
+        susEnfasis += `<dd class="small">E1. Innovación</dd>`;
+    }
+    if (data.includes("2")) {
+        susEnfasis += `<dd class="small">E2. Creación</dd>`;
+    }
+    if (data.includes("3")) {
+        susEnfasis += `<dd class="small">E3. Investigación</dd>`;
+    }
+    return susEnfasis;
+}
+
+function grados(data) {
+    var susGrados = `<ul class="m-0 p-0">`;
+    data.forEach((d)=> {
+        susGrados += `<li class="ms-3 mb-1">${d}</li>`;
+    });
+    susGrados += "</ul>";
+    return susGrados;
+}
+
+function keywords(data) {
+    var susKeywords = "";
+    data.forEach((d)=> {
+            susKeywords += `<span class="badge text-bg-secondary">${d}</span> `;
+    });
+    return susKeywords;
+}
+
+function more(data) {
+    var suInfo = "";
+    if(data.perfil){ suInfo += `<a href="${data.perfil}" target="_blank" class="link-dark">Portafolio académico</a> &nbsp;`;}
+    if(data.website){ suInfo += `<a href="${data.website}" target="_blank" class="link-dark">Sitio web</a> &nbsp;`;}
+    if(data.linkedin){ suInfo += `<a href="${data.linkedin}" target="_blank" class="link-dark">LinkedIn</a> &nbsp;`;}
+    if(data.scholar){ suInfo += `<a href="${data.scholar}" target="_blank" class="link-dark">Google Académico</a> &nbsp;`;}
+    return suInfo;
+}

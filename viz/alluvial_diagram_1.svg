@@ -1,6 +1,8 @@
 <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 600">
 	<title>viz</title>
 	<style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat');
+
 		tspan { white-space:pre } 
 		.s0 { fill: #000000 } 
 		.s1 { mix-blend-mode: multiply;fill: none;stroke: #189af6;stroke-width: 9.1 } 
@@ -26,7 +28,7 @@
 		.s21 { mix-blend-mode: multiply;fill: none;stroke: #189af6;stroke-width: 6.1 } 
 		.s22 { mix-blend-mode: multiply;fill: none;stroke: #125389;stroke-width: 1 } 
 		.s23 { mix-blend-mode: multiply;fill: none;stroke: #125389;stroke-width: 2 } 
-		.t24 { font-size: 11px;fill: #000000;font-family: Helvetica, Arial, sans-serif } 
+		.t24 { font-size: 11px;fill: #000000;font-family: "Montserrat", sans-serif;} 
 		.asterisco {fill: #666666; } 
 	</style>
         <g id="visualization">
